@@ -88,6 +88,21 @@ const features = [
 
 <template>
   <div class="legal-page">
+    <!-- Reminders full width -->
+    <div class="reminders">
+      <div v-for="r in reminders" :key="r.label" class="reminder-item">
+        <span class="reminder-icon">{{ r.icon }}</span>
+        <div class="reminder-info">
+          <span class="reminder-label">{{ r.label }}</span>
+          <span class="reminder-date">{{ r.date }}</span>
+        </div>
+        <span :class="['reminder-days', r.days <= 7 ? 'urgent' : r.days <= 15 ? 'soon' : '']">
+          <span class="reminder-num">{{ r.days === 0 ? '0' : r.days }}</span>
+          <span class="reminder-unit">{{ r.days === 0 ? '今天截止' : '天' }}</span>
+        </span>
+      </div>
+    </div>
+
     <div class="two-col">
       <!-- Contract generation -->
       <section>
@@ -134,18 +149,6 @@ const features = [
             <span class="legend-item"><span class="dot today-dot"></span>今日</span>
             <span class="legend-note">状态标记：已完成 / 进行中 / 已逾期</span>
           </div>
-          <div class="reminders">
-            <div v-for="r in reminders" :key="r.label" class="reminder-item">
-              <span class="reminder-icon">{{ r.icon }}</span>
-              <div class="reminder-info">
-                <span class="reminder-label">{{ r.label }}</span>
-                <span class="reminder-date">{{ r.date }}</span>
-              </div>
-              <span :class="['reminder-days', r.days <= 7 ? 'urgent' : r.days <= 15 ? 'soon' : '']">
-                {{ r.days === 0 ? '今天截止' : `还有 ${r.days} 天` }}
-              </span>
-            </div>
-          </div>
         </div>
       </section>
     </div>
@@ -154,8 +157,9 @@ const features = [
 
 <style scoped>
 .legal-page { display: flex; flex-direction: column; gap: 24px; }
-.two-col { display: grid; grid-template-columns: 1fr 570px; gap: 20px; align-items: stretch; }
+.two-col { display: grid; grid-template-columns: 1fr 400px; gap: 25px; align-items: stretch; }
 .two-col > section { display: flex; flex-direction: column; }
+.two-col > section:first-child .contract-list { flex: 1; }
 .two-col > section:last-child .calendar-card { flex: 1; }
 
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -167,26 +171,27 @@ const features = [
   background: white;
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex: 1;
 }
 .group-header {
   display: flex; align-items: center; gap: 8px;
   padding-left: 10px;
   border-left: 3px solid var(--primary);
-  font-size: 14px; font-weight: 600; color: var(--text);
+  font-size: 18px; font-weight: 600; color: var(--text);
 }
 .group-icon { font-size: 15px; }
 .group-title { font-weight: 600; }
-.pill-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 10px; }
 .pill {
-  padding: 5px 12px;
+  padding: 7px 16px;
   background: #f0f5ff;
   border: 1px solid #d6e4ff;
-  border-radius: 20px;
-  font-size: 13px;
+  border-radius: 6px;
+  font-size: 14px;
   color: var(--text);
   cursor: pointer;
   transition: all 0.15s;
@@ -199,6 +204,8 @@ const features = [
   border: 1px solid var(--border-light);
   border-radius: var(--radius);
   padding: 16px;
+  display: flex;
+  flex-direction: column;
 }
 .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .cal-month { font-weight: 600; font-size: 14px; color: var(--text); }
@@ -225,20 +232,22 @@ const features = [
 .cal-day.today { background: var(--primary); color: white; font-weight: 600; }
 .cal-day.empty { pointer-events: none; }
 
-.cal-legend { display: flex; align-items: center; gap: 16px; margin-top: 14px; flex-wrap: wrap; }
+.cal-legend { display: flex; align-items: center; gap: 16px; margin-top: auto; padding-top: 14px; flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
 .dot { width: 10px; height: 10px; border-radius: 50%; }
 .event-dot { background: #fff7ed; border: 1px solid #fed7aa; }
 .today-dot { background: var(--primary); }
 .legend-note { font-size: 12px; color: var(--text-secondary); margin-left: auto; }
 
-.reminders { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; border-top: 1px solid var(--border-light); padding-top: 14px; }
-.reminder-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #f8fafc; border-radius: 8px; }
-.reminder-icon { font-size: 16px; flex-shrink: 0; }
-.reminder-info { display: flex; flex-direction: column; flex: 1; }
-.reminder-label { font-size: 13px; font-weight: 500; color: var(--text); }
-.reminder-date { font-size: 11px; color: var(--text-secondary); }
-.reminder-days { font-size: 13px; font-weight: 600; color: #52c41a; white-space: nowrap; }
-.reminder-days.soon { color: #fa8c16; }
-.reminder-days.urgent { color: #f5222d; }
+.reminders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.reminder-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #f8fafc; border-radius: 10px; }
+.reminder-icon { font-size: 22px; flex-shrink: 0; }
+.reminder-info { display: flex; flex-direction: column; flex: 1; gap: 2px; }
+.reminder-label { font-size: 14px; font-weight: 600; color: var(--text); }
+.reminder-date { font-size: 12px; color: var(--text-secondary); }
+.reminder-days { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; min-width: 52px; }
+.reminder-num { font-size: 32px; font-weight: 700; line-height: 1; color: #52c41a; }
+.reminder-unit { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.reminder-days.soon .reminder-num { color: #fa8c16; }
+.reminder-days.urgent .reminder-num { color: #f5222d; }
 </style>
