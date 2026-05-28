@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import StepPage from './StepPage.vue'
 import SummaryPage from './SummaryPage.vue'
+import { sharedFormData } from '../store'
 
 export interface StepData {
   id: string
@@ -53,6 +54,7 @@ const EMPTY_FORM: BaseFormData = {
 
 const formData = ref<BaseFormData>({ ...EMPTY_FORM })
 
+watch(formData, (v) => { sharedFormData.value = { ...v } }, { deep: true })
 
 function onAnswer(stepId: string, answer: string | BusinessScope) {
   (formData.value as any)[stepId] = answer

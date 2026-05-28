@@ -3,11 +3,14 @@ import { ref } from 'vue'
 import RegAdvisor from './components/RegAdvisor.vue'
 import FinanceSandbox from './components/FinanceSandbox.vue'
 import LegalAssistant from './components/LegalAssistant.vue'
+import ControlSandbox from './components/ControlSandbox.vue'
 
-const currentModule = ref<'reg' | 'finance' | 'legal'>('reg')
-const modules = [
+type ModuleId = 'reg' | 'finance' | 'control' | 'legal'
+const currentModule = ref<ModuleId>('reg')
+const modules: { id: ModuleId; label: string; icon: string }[] = [
   { id: 'reg', label: '智能工商注册顾问', icon: '📋' },
-  { id: 'finance', label: '财税与成本沙盘', icon: '📊' },
+  // { id: 'finance', label: '财税与成本沙盘', icon: '📊' },
+  { id: 'control', label: '开业成本预估', icon: '🧪' },
   { id: 'legal', label: '法务合规与合同助手', icon: '⚖️' },
 ]
 </script>
@@ -24,7 +27,7 @@ const modules = [
         :key="m.id"
         class="nav-item"
         :class="{ active: currentModule === m.id }"
-        @click="currentModule = m.id as 'reg' | 'finance' | 'legal'"
+        @click="currentModule = m.id"
       >
         <span>{{ m.icon }}</span>
         <span>{{ m.label }}</span>
@@ -39,6 +42,7 @@ const modules = [
     <main class="content-area">
       <RegAdvisor v-if="currentModule === 'reg'" />
       <FinanceSandbox v-else-if="currentModule === 'finance'" />
+      <ControlSandbox v-else-if="currentModule === 'control'" />
       <LegalAssistant v-else />
     </main>
   </div>
