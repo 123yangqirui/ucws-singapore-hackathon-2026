@@ -75,7 +75,7 @@ nav { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
   padding: 10px 12px;
   background: none;
   border: none;
-  color: var(--text-secondary);
+  color: var(--text);
   font-size: 13.5px;
   cursor: pointer;
   text-align: left;

@@ -215,7 +215,7 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
 }
 .prog-label {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text);
   padding-top: 5px;
   line-height: 1.3;
 }
