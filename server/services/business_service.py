@@ -246,14 +246,40 @@ class BusinessService:
         - 输出：预估金额(万元)
         """
         system_prompt = """你是一位专业的公司注册顾问。
-        Please parse the "estimated_amount" and output them in JSON format.
+        Please parse the "estimatedAmount" and "explanation" and output them in JSON format.
         EXAMPLE JSON OUTPUT:
         {
-            "estimatedAmount": 预估金额(万元)
+            "estimatedAmount": 预估金额(万元),
+            "explanation": "100字以内的建议与解释"
         }
-"""
+        """
         prompt = f"""
-        请根据用户输入信息作为参考，综合分析结合公司创办过程、可能会遇到的风险等等因素综合推理生成预估注册资本（万元）
+        系统角色与任务
+        你是一位资深工商注册顾问，擅长为 OPC（一人有限责任公司）及小微企业提供注册资本规划建议。请根据用户提供的【预计投入资金】和【主营业务】，输出：
+        
+        1. 一个合适的注册资本金额（单位：万元，整数或保留一位小数）。
+        2. 一段100字以内的建议与解释，说明该数字的合理性及工商合规要点。
+        
+        分析逻辑（严格按顺序思考）
+        
+        1. 法定底线：
+           · 一般行业无最低注册资本限制（1元亦可）。
+           · 若主营业务涉及需要前置/后置许可的行业（如劳务派遣≥200万、建筑施工≥400万、保险经纪≥1000万、增值电信业务≥100万等），必须满足对应最低限额。
+           · 若无特殊许可，跳过此条。
+        2. 投入资金与注册资本的关系：
+           · 注册资本≠投入资金。投入资金通常包括开办费、设备、运营流动资金等。
+           · 建议注册资本控制在投入资金的30%~70%之间：
+             · 比例过低（<30%）：客户、合作方可能认为公司实力不足，影响招投标或信任。
+             · 比例过高（>100%）：股东面临更大的认缴责任，且超出实际能力可能被认定为“天价资本”引发风险。
+           · 若用户投入资金<10万，注册资本可等于或略高于投入资金（如投入5万，建议注册资本5万），因低资本下认缴压力小。
+        3. 行业风险匹配：
+           · 低风险行业（咨询、设计、零售、信息技术服务）：建议注册资本10万~100万，偏向投入资金的40%~60%。
+           · 中风险行业（贸易、餐饮、小规模生产、装修）：建议注册资本30万~200万，偏向投入资金的50%~70%。
+           · 高风险行业（建筑工程、劳务派遣、金融服务、医疗器械）：必须满足法定底线，并在底线基础上上浮20%~50%或参考投入资金取高者。
+        4. 认缴制适用：
+           · 提醒用户：注册资本为认缴制，不要求立即实缴，但需在章程中明确期限内缴足（5年）。
+           · 建议数字不宜超过用户未来3~5年可承受的实缴能力。
+        -----
         意向注册资本：{request.capitalIntention}（万元）
         主营业务类型：{request.formData.business}
         人数：{request.formData.people}
@@ -278,7 +304,8 @@ class BusinessService:
                 "status": "success",
                 "message": "预估注册资本成功",
                 "data": CapitalResponse(
-                    estimatedAmount=float(data.get("estimatedAmount", request.capitalIntention))
+                    estimatedAmount=float(data.get("estimatedAmount", request.capitalIntention)),
+                    explanation=data.get("explanation", "")
                 )
             }
         except Exception as e:
@@ -288,6 +315,7 @@ class BusinessService:
                 "message": f"预估注册资本失败: {str(e)}",
                 "data": CapitalResponse(
                     estimatedAmount=request.capitalIntention,
+                    explanation=""
                 )
             }
     

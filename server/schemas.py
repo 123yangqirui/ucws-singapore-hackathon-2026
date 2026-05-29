@@ -108,6 +108,7 @@ class CapitalRequest(BaseModel):
 class CapitalResponse(BaseModel):
     """响应：预估金额(万元)"""
     estimatedAmount: float = Field(..., description="预估金额(万元)")
+    explanation: str = Field(..., description="建议与解释")
 
 # ============== 第六页：address-recommendations ==============
 # 注册地址：根据前面已填写的完整信息，生成推荐的注册地址。
