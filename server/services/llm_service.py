@@ -19,9 +19,9 @@ class LLMService:
         )
     
     async def chat(
-        self,
-        messages: List[Dict[str, str]],
-        temperature: float = 0.1,
+            self,
+            messages: List[Dict[str, str]],
+            temperature: float = 0.1,
     ) -> str:
         """
         调用大模型进行对话
@@ -29,7 +29,6 @@ class LLMService:
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=messages,
-            temperature=temperature,
             response_format={"type": "json_object"}
             )
         result = response.choices[0].message.content
