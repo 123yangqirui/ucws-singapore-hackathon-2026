@@ -140,3 +140,12 @@ class AddressResponse(BaseModel):
     province: str = Field(..., description="省份")
     recommendation: str = Field(..., description="推荐的地址类型")
     explanation: str = Field(..., description="推荐理由")
+
+# ============== 第七页：org-tips ==============
+class OrgTipsRequest(BaseModel):
+    """请求：组织架构小tips"""
+    formData: dict = Field(..., description="完整表单数据")
+
+class OrgTipsResponse(BaseModel):
+    """响应：组织架构小tips"""
+    tips: str = Field(..., description="组织架构建议")

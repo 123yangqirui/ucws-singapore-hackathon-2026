@@ -15,6 +15,8 @@ from schemas import (
     CapitalResponse,
     AddressRequest,
     AddressResponse,
+    OrgTipsRequest,
+    OrgTipsResponse,
 )
 from .llm_service import llm_service
 
@@ -35,7 +37,7 @@ class BusinessService:
         Please parse the "names" and output them in JSON format.
         EXAMPLE JSON OUTPUT:
         {
-            "names": ["星禾云创科技有限公司", "星禾云创商务有限公司", "星禾云创网络有限公司"]
+            "names": ["星禾云创科技有限公司", "璀璨星禾商务有限公司", "星禾流动网络有限公司"]
         }
         """
         prompt = f"""
@@ -89,7 +91,7 @@ class BusinessService:
         }
         """
         prompt = f"""
-                请根据用户的输入行业大类和具体描述(可选)，判断是否需要审批、审批类型、审批详情。如果需要审批，请给出对应的规则。
+                请根据用户的输入行业大类和具体描述(可选)，判断是否需要审批、审批类型、审批详情。如果需要审批，请给出对应的详细的规则。
                 行业大类：{request.industry}
                 具体描述：{request.desc}(可选)
                 """
@@ -376,4 +378,40 @@ class BusinessService:
                     recommendation="",
                     explanation=""
                 )
+            }
+
+    @staticmethod
+    async def process_page7_org_tips(request: OrgTipsRequest) -> dict:
+        """第七页：生成组织架构小tips"""
+        system_prompt = """你是一位专业的公司注册顾问。
+        根据用户的公司信息，生成一条简短实用的组织架构建议（100字以内）。
+        EXAMPLE JSON OUTPUT:
+        {
+            "tips": "建议内容"
+        }
+        """
+        prompt = f"""根据以下公司信息生成组织架构小tips：
+        用户所选的行业可能仅仅是一个大类，具体的业务类型和经营范围会影响组织架构的设计。
+        请根据用户提供的主营业务类型、注册资本、公司规模等信息，结合行业特点，给出一条简短实用的组织架构建议（100字以内）。请确保建议具有针对性和可操作性，能够帮助用户更好地规划公司的组织结构。
+        {json.dumps(request.formData, ensure_ascii=False)}
+        """
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ]
+        try:
+            response = await llm_service.chat(messages=messages, temperature=0.3)
+            data = json.loads(response)
+            return {
+                "code": 200,
+                "status": "success",
+                "message": "生成组织架构tips成功",
+                "data": OrgTipsResponse(tips=data.get("tips", ""))
+            }
+        except Exception as e:
+            return {
+                "code": 500,
+                "status": "error",
+                "message": f"生成组织架构tips失败: {str(e)}",
+                "data": OrgTipsResponse(tips="")
             }

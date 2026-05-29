@@ -15,6 +15,8 @@ from schemas import (
     CapitalResponse,
     AddressRequest,
     AddressResponse,
+    OrgTipsRequest,
+    OrgTipsResponse,
 )
 
 from services import BusinessService
@@ -126,7 +128,21 @@ async def page6_address_recommend(request: AddressRequest):
     try:
         result = await BusinessService.process_page6_address_recommend(request)
         if result["status"] == "success":
-            print("6.注册地址，路由返回内容：") 
+            print("6.注册地址，路由返回内容：")
+            print(result["data"])
+            return result["data"]
+        else:
+            raise HTTPException(status_code=500, detail=f"处理失败: {result['message']}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
+
+
+@router.post("/org-tips", response_model=OrgTipsResponse)
+async def page7_org_tips(request: OrgTipsRequest):
+    try:
+        result = await BusinessService.process_page7_org_tips(request)
+        if result["status"] == "success":
+            print("7.组织架构tips，路由返回内容：")
             print(result["data"])
             return result["data"]
         else:
