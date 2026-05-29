@@ -143,6 +143,7 @@ watch(() => props.step.id, (id) => {
 interface CapitalEstimate {
   intention: number
   estimatedAmount: number
+  explanation: string
 }
 
 const capitalIntention = ref<number | null>(null)
@@ -174,9 +175,9 @@ async function loadCapitalEstimate(amount: number) {
       }),
     })
     if (!res.ok) throw new Error('Failed to load capital estimate')
-    const data = await res.json() as { estimatedAmount: number }
+    const data = await res.json() as { estimatedAmount: number; explanation: string }
     if (seq !== capitalRequestSeq) return
-    const estimate: CapitalEstimate = { intention: amount, estimatedAmount: data.estimatedAmount }
+    const estimate: CapitalEstimate = { intention: amount, estimatedAmount: data.estimatedAmount, explanation: data.explanation ?? '' }
     capitalEstimate.value = estimate
     emit('answer', 'capital', formatCapitalAnswer(estimate))
   } catch {
@@ -283,6 +284,7 @@ const nameDesc = ref('')
 const suggestedNames = ref<string[]>([])
 const namesLoading = ref(false)
 const approval = ref<{ needsApproval: boolean; type: string; details: string } | null>(null)
+const approvalLoading = ref(false)
 const showModal = ref(false)
 const customNameActive = ref(false)
 const customNameInput = ref('')
@@ -308,7 +310,9 @@ async function generateNames() {
 let approvalTimer: ReturnType<typeof setTimeout> | null = null
 watch(nameIndustry, (ind) => {
   if (approvalTimer) clearTimeout(approvalTimer)
-  if (!ind) { approval.value = null; return }
+  if (!ind) { approval.value = null; approvalLoading.value = false; return }
+  approvalLoading.value = true
+  approval.value = null
   approvalTimer = setTimeout(async () => {
     try {
       const res = await fetch('/api/check-approval', {
@@ -317,7 +321,9 @@ watch(nameIndustry, (ind) => {
         body: JSON.stringify({ industry: ind, desc: nameDesc.value }),
       })
       if (res.ok) approval.value = await res.json()
-    } catch { /* ignore */ }
+    } catch { /* ignore */ } finally {
+      approvalLoading.value = false
+    }
   }, 400)
 })
 onUnmounted(() => { if (approvalTimer) clearTimeout(approvalTimer) })
@@ -340,6 +346,30 @@ function onCustomNameInput() {
   emit('answer', 'name', customNameInput.value.trim())
 }
 // --- end name step state ---
+
+// --- org step state ---
+const orgTips = ref('')
+const orgTipsLoading = ref(false)
+
+async function loadOrgTips() {
+  orgTipsLoading.value = true
+  orgTips.value = ''
+  try {
+    const res = await fetch('/api/org-tips', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ formData: cleanFormData(props.formData) }),
+    })
+    if (res.ok) orgTips.value = (await res.json()).tips
+  } catch { /* ignore */ } finally {
+    orgTipsLoading.value = false
+  }
+}
+
+watch(() => props.step.id, (id) => {
+  if (id === 'org' && !orgTips.value) loadOrgTips()
+})
+// --- end org step state ---
 
 watch(() => props.step.id, () => {
   customInput.value = ''
@@ -521,7 +551,11 @@ function goForward() {
         </div>
 
         <!-- 前置/后置审批提示 -->
-        <div v-if="approval?.needsApproval" class="approval-banner">
+        <div v-if="approvalLoading" class="approval-banner approval-banner--loading">
+          <span class="spinner spinner--dark" style="border-color: rgba(0,0,0,0.15); border-top-color: #d46b08;"></span>
+          <span style="font-size:13px;color:#8c6d1f;">正在检查审批要求...</span>
+        </div>
+        <div v-else-if="approval?.needsApproval" class="approval-banner">
           <div class="banner-left">
             <span class="banner-icon">⚠️</span>
             <div>
@@ -632,6 +666,7 @@ function goForward() {
           </span>
           <span v-else class="capital-estimate-value muted">输入认缴金额后自动显示</span>
         </div>
+        <div v-if="capitalEstimate?.explanation" class="capital-explanation">{{ capitalEstimate.explanation }}</div>
       </div>
 
       <div v-else-if="step.id === 'address'" class="address-step">
@@ -670,7 +705,8 @@ function goForward() {
         </div>
         <div class="org-tips">
           <span class="org-tips-label">小tips</span>
-          <span class="org-tips-text">待定</span>
+          <span v-if="orgTipsLoading" class="org-tips-text muted"><span class="spinner"></span> 正在生成建议...</span>
+          <span v-else class="org-tips-text">{{ orgTips || '待定' }}</span>
         </div>
       </div>
 
@@ -1134,6 +1170,16 @@ function goForward() {
 .capital-unit {
   color: var(--primary);
 }
+.capital-explanation {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  padding: 12px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 8px;
+  background: #fafafa;
+  white-space: pre-line;
+}
 .capital-tip {
   padding: 12px 14px;
   border: 1px solid #ffe58f;
@@ -1279,7 +1325,11 @@ function goForward() {
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+.org-tips-text.muted { color: var(--text-secondary); font-weight: 400; }
 
 /* name step */
 .name-step { display: flex; flex-direction: column; gap: 22px; }
@@ -1492,6 +1542,10 @@ function goForward() {
 .banner-icon { font-size: 18px; flex-shrink: 0; }
 .banner-title { font-size: 13px; font-weight: 600; color: #d46b08; }
 .banner-desc { font-size: 12px; color: #8c6d1f; margin-top: 2px; }
+.approval-banner--loading {
+  gap: 10px;
+  justify-content: flex-start;
+}
 .btn-detail {
   padding: 5px 14px;
   border: 1px solid #ffa940;
