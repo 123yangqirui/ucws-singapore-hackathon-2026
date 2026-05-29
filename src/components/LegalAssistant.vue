@@ -3,11 +3,9 @@ import { ref, computed } from 'vue'
 
 const today = new Date()
 const currentYear = ref(today.getFullYear())
-const currentMonth = ref(today.getMonth()) // 0-indexed
+const currentMonth = ref(today.getMonth())
 
-const monthName = computed(() => {
-  return `${currentYear.value}年${currentMonth.value + 1}月`
-})
+const monthName = computed(() => `${currentYear.value}年${currentMonth.value + 1}月`)
 
 function prevMonth() {
   if (currentMonth.value === 0) { currentMonth.value = 11; currentYear.value-- }
@@ -18,7 +16,6 @@ function nextMonth() {
   else currentMonth.value++
 }
 
-// Compliance event days: 1, 15, last day of month
 const eventDays = computed(() => {
   const daysInMonth = new Date(currentYear.value, currentMonth.value + 1, 0).getDate()
   return new Set([1, 15, daysInMonth])
@@ -32,222 +29,294 @@ function daysUntil(month: number, day: number): number {
 }
 
 const reminders = computed(() => {
-  const nextMonth15 = (() => {
-    const d = new Date(today.getFullYear(), today.getMonth(), 15)
-    if (d.getTime() <= new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime())
-      return new Date(today.getFullYear(), today.getMonth() + 1, 15)
-    return d
-  })()
-  const taxDays = Math.round((nextMonth15.getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86400000)
+  const base = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()
+  let next15 = new Date(today.getFullYear(), today.getMonth(), 15)
+  if (next15.getTime() <= base) next15 = new Date(today.getFullYear(), today.getMonth() + 1, 15)
+  const taxDays = Math.round((next15.getTime() - base) / 86400000)
   return [
-    { label: '工商年报截止', date: '6月30日', days: daysUntil(5, 30), icon: '🏢' },
-    { label: '申报纳税截止', date: '每月15日', days: taxDays, icon: '💰' },
-    { label: '社保汇缴申报', date: '每月15日', days: taxDays, icon: '🛡️' },
+    { label: '工商年报截止', date: '2026年6月30日', days: daysUntil(5, 30), icon: '📆' },
+    { label: '申报纳税截止', date: '每月15日', days: taxDays, icon: '📊' },
+    { label: '社保汇缴申报', date: '每月15日', days: taxDays, icon: '🏦' },
   ]
 })
 
 const calendarDays = computed(() => {
   const year = currentYear.value
   const month = currentMonth.value
-  const firstDow = new Date(year, month, 1).getDay() // 0=Sun
+  const firstDow = new Date(year, month, 1).getDay()
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const isCurrentMonth = year === today.getFullYear() && month === today.getMonth()
   const todayDate = today.getDate()
-
   const cells: Array<{ day: number | null; hasEvent: boolean; isToday: boolean }> = []
-  for (let i = 0; i < firstDow; i++) cells.push({ day: null, hasEvent: false, isToday: false })
-  for (let d = 1; d <= daysInMonth; d++) {
+  // Mon-first offset
+  const offset = firstDow === 0 ? 6 : firstDow - 1
+  for (let i = 0; i < offset; i++) cells.push({ day: null, hasEvent: false, isToday: false })
+  for (let d = 1; d <= daysInMonth; d++)
     cells.push({ day: d, hasEvent: eventDays.value.has(d), isToday: isCurrentMonth && d === todayDate })
-  }
   return cells
 })
 
-const features = [
+const groups = [
   {
-    icon: '👤',
-    title: '招人才',
-    items: ['Offer letter', '录用条件确认书', '入职信息登记表'],
+    icon: 'fas fa-user-check', title: '招人才',
+    cards: [
+      { icon: 'fas fa-envelope-open-text', title: 'Offer letter', sub: '录用意向书' },
+      { icon: 'fas fa-clipboard-list', title: '录用条件确认书', sub: '试用期标准' },
+      { icon: 'fas fa-id-card', title: '入职信息登记表', sub: '员工档案' },
+    ],
   },
   {
-    icon: '📄',
-    title: '签合同',
-    items: ['劳动合同', '兼职协议', '劳务协议'],
+    icon: 'fas fa-handshake', title: '签合同',
+    cards: [
+      { icon: 'fas fa-file-contract', title: '劳动合同', sub: '正式/固定期限' },
+      { icon: 'fas fa-user-friends', title: '兼职协议', sub: '非全日制用工' },
+      { icon: 'fas fa-briefcase', title: '劳务协议', sub: '劳务合作' },
+    ],
   },
   {
-    icon: '⚙️',
-    title: '做管理',
-    items: ['工资表', '考勤表', '考勤休假管理制度', '职工名册', '保密协议', '竞业限制协议', '员工手册/用工管理制度模板', '绩效评估报告'],
+    icon: 'fas fa-chart-simple', title: '做管理',
+    cards: [
+      { icon: 'fas fa-table-list', title: '工资表', sub: '薪酬模板' },
+      { icon: 'fas fa-calendar-week', title: '考勤表', sub: '月度统计' },
+      { icon: 'fas fa-book', title: '考勤休假管理制度', sub: '制度范本' },
+      { icon: 'fas fa-address-book', title: '职工名册', sub: '花名册合规' },
+      { icon: 'fas fa-lock', title: '保密协议', sub: '商业机密' },
+      { icon: 'fas fa-ban', title: '竞业限制协议', sub: '高管约束' },
+      { icon: 'fas fa-building', title: '员工手册', sub: '通用制度' },
+      { icon: 'fas fa-chart-line', title: '绩效评估报告', sub: 'KPI考核' },
+    ],
   },
   {
-    icon: '🚪',
-    title: '办离职',
-    items: ['员工离职审批表', '离职证明', '终止劳动合同通知书'],
+    icon: 'fas fa-door-open', title: '办离职',
+    cards: [
+      { icon: 'fas fa-user-minus', title: '员工离职审批表', sub: '离职流程' },
+      { icon: 'fas fa-certificate', title: '离职证明', sub: '法定凭证' },
+      { icon: 'fas fa-file-excel', title: '终止劳动合同通知书', sub: '合同到期/解除' },
+    ],
   },
 ]
+
+const downloadToast = ref(false)
+function handleDownload() {
+  downloadToast.value = true
+  setTimeout(() => { downloadToast.value = false }, 2800)
+}
 </script>
 
 <template>
-  <div class="legal-page">
-    <!-- Reminders full width -->
-    <div class="reminders">
-      <div v-for="r in reminders" :key="r.label" class="reminder-item">
-        <span class="reminder-icon">{{ r.icon }}</span>
-        <div class="reminder-info">
-          <span class="reminder-label">{{ r.label }}</span>
-          <span class="reminder-date">{{ r.date }}</span>
+  <div class="legal-root">
+    <!-- 主网格：左侧模板区 + 右侧边栏 -->
+    <div class="main-grid">
+      <!-- 左侧：高频合同与文书 -->
+      <div class="templates-section">
+        <div class="section-header">
+          <h2 class="section-h2"><i class="fas fa-file-signature"></i> 高频合同与文书</h2>
+          <span class="view-link">查看全部 <i class="fas fa-arrow-right"></i></span>
         </div>
-        <span :class="['reminder-days', r.days <= 7 ? 'urgent' : r.days <= 15 ? 'soon' : '']">
-          <span class="reminder-num">{{ r.days === 0 ? '0' : r.days }}</span>
-          <span class="reminder-unit">{{ r.days === 0 ? '今天截止' : '天' }}</span>
-        </span>
-      </div>
-    </div>
 
-    <div class="two-col">
-      <!-- Contract generation -->
-      <section>
-        <h2 class="section-title">高频合同与文书</h2>
-        <div class="contract-list">
-          <div v-for="f in features" :key="f.title" class="contract-card">
-            <div class="group-header">
-              <span class="group-icon">{{ f.icon }}</span>
-              <span class="group-title">{{ f.title }}</span>
-            </div>
-            <div class="pill-row">
-              <button v-for="item in f.items" :key="item" class="pill">{{ item }}</button>
+        <div v-for="g in groups" :key="g.title" class="group-block">
+          <div class="group-title"><i :class="g.icon"></i> {{ g.title }}</div>
+          <div class="cards-grid">
+            <div v-for="c in g.cards" :key="c.title" class="template-card">
+              <i :class="c.icon"></i>
+              <h4>{{ c.title }}</h4>
+              <p>{{ c.sub }}</p>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Compliance calendar -->
-      <section>
-        <div class="section-header">
-          <h2 class="section-title" style="margin:0">合规日历</h2>
-          <button class="link-btn">查看全部</button>
+      <!-- 右侧边栏 -->
+      <div class="right-sidebar">
+        <!-- 合规倒计时 -->
+        <div class="sidebar-card">
+          <div class="card-head">
+            <span><i class="fas fa-hourglass-half"></i> 合规倒计时</span>
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="deadline-list">
+            <div v-for="r in reminders" :key="r.label" class="deadline-item">
+              <div>
+                <span class="deadline-title">{{ r.icon }} {{ r.label }}</span><br>
+                <span class="deadline-date">{{ r.date }}</span>
+              </div>
+              <div :class="['countdown', r.days <= 7 ? 'urgent' : r.days <= 15 ? 'soon' : '']">
+                {{ r.days }}天
+              </div>
+            </div>
+          </div>
+          <div class="deadline-hint">⏱️ 逾期将影响企业信用评级</div>
         </div>
-        <div class="calendar-card">
+
+        <!-- 合规日历 -->
+        <div class="sidebar-card">
+          <div class="card-head">
+            <span><i class="fas fa-calendar-alt"></i> 合规日历</span>
+            <span class="view-link" style="background:none;padding:0;font-size:12px;">查看全部 <i class="fas fa-chevron-right"></i></span>
+          </div>
           <div class="cal-nav">
-            <span class="cal-month">{{ monthName }}</span>
+            <span class="cal-month-label">{{ monthName }}</span>
             <div class="cal-btns">
               <button class="cal-btn" @click="prevMonth">‹</button>
               <button class="cal-btn" @click="nextMonth">›</button>
             </div>
           </div>
           <div class="cal-grid">
-            <div v-for="d in ['日','一','二','三','四','五','六']" :key="d" class="cal-weekday">{{ d }}</div>
+            <div v-for="d in ['一','二','三','四','五','六','日']" :key="d" class="cal-weekday">{{ d }}</div>
             <div
-              v-for="(cell, i) in calendarDays"
-              :key="i"
+              v-for="(cell, i) in calendarDays" :key="i"
               :class="['cal-day', { event: cell.hasEvent && !cell.isToday, today: cell.isToday, empty: !cell.day }]"
-            >
-              {{ cell.day ?? '' }}
-            </div>
+            >{{ cell.day ?? '' }}</div>
           </div>
           <div class="cal-legend">
-            <span class="legend-item"><span class="dot event-dot"></span>待办事项</span>
+            <span class="legend-item"><span class="dot event-dot"></span>截止日</span>
             <span class="legend-item"><span class="dot today-dot"></span>今日</span>
-            <span class="legend-note">状态标记：已完成 / 进行中 / 已逾期</span>
           </div>
         </div>
-      </section>
+
+        <!-- 一键下载 -->
+        <div class="download-card">
+          <button class="download-btn" @click="handleDownload">
+            <i class="fas fa-download"></i>
+            <span>📁 一键下载全套模板</span>
+            <i class="fas fa-arrow-right arrow-icon"></i>
+          </button>
+          <div class="download-hint">
+            <i class="fas fa-file-zipper"></i> 含合同、协议、制度、表单等56份标准文书
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- Toast -->
+    <Transition name="toast">
+      <div v-if="downloadToast" class="toast">
+        ⚡ 正在打包全套合同/制度/表单模板 (共56份) … 演示模式
+      </div>
+    </Transition>
   </div>
 </template>
 
 <style scoped>
-.legal-page { display: flex; flex-direction: column; gap: 24px; }
-.two-col { display: grid; grid-template-columns: 1fr 400px; gap: 25px; align-items: stretch; }
-.two-col > section { display: flex; flex-direction: column; }
-.two-col > section:first-child .contract-list { flex: 1; }
-.two-col > section:last-child .calendar-card { flex: 1; }
+.legal-root { display: flex; flex-direction: column; gap: 0; position: relative; }
 
-.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.section-title { font-size: 15px; font-weight: 600; color: var(--text); margin: 0 0 14px; }
-.link-btn { background: none; border: none; color: var(--primary); font-size: 13px; cursor: pointer; font-weight: 500; padding: 0; }
+.main-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
 
-.contract-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
-.contract-card {
-  background: white;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  flex: 1;
-}
-.group-header {
+/* ---- 左侧 ---- */
+.templates-section { display: flex; flex-direction: column; gap: 20px; }
+
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.section-h2 { font-size: 16px; font-weight: 700; color: var(--text); display: inline-flex; align-items: center; gap: 8px; }
+.section-h2 i { color: var(--primary); }
+.view-link { font-size: 12px; font-weight: 500; color: var(--primary); cursor: default; }
+
+.group-block { display: flex; flex-direction: column; gap: 10px; }
+.group-title {
+  font-size: 16px; font-weight: 600; color: var(--text);
+  border-left: 3px solid var(--primary); padding-left: 10px;
   display: flex; align-items: center; gap: 8px;
-  padding-left: 10px;
-  border-left: 3px solid var(--primary);
-  font-size: 18px; font-weight: 600; color: var(--text);
 }
-.group-icon { font-size: 15px; }
-.group-title { font-weight: 600; }
-.pill-row { display: flex; flex-wrap: wrap; gap: 10px; }
-.pill {
-  padding: 7px 16px;
-  background: #f0f5ff;
-  border: 1px solid #d6e4ff;
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.pill:hover { background: #e6f4ff; border-color: var(--primary); color: var(--primary); }
+.group-title i { color: var(--primary); }
 
-.calendar-card {
-  background: white;
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
+.template-card {
+  background: white; border: 1px solid var(--border-light);
+  border-radius: var(--radius); padding: 20px 16px 16px;
+  cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow);
 }
-.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.cal-month { font-weight: 600; font-size: 14px; color: var(--text); }
+.template-card i { font-size: 28px; color: var(--primary); margin-bottom: 12px; display: block; }
+.template-card h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+.template-card p { font-size: 12px; color: var(--text-secondary); }
+.template-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+/* ---- 右侧 ---- */
+.right-sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+.sidebar-card {
+  background: white; border: 1px solid var(--border-light);
+  border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; font-size: 14px; color: var(--text);
+  margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light);
+}
+.card-head i { color: var(--primary); }
+
+.deadline-list { display: flex; flex-direction: column; gap: 8px; }
+.deadline-item {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #fafafa; padding: 9px 12px; border-radius: 6px;
+  border: 1px solid var(--border-light);
+}
+.deadline-title { font-weight: 600; font-size: 13px; color: var(--text); }
+.deadline-date { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+.countdown {
+  font-weight: 700; font-size: 13px; background: var(--primary); color: white;
+  padding: 2px 10px; border-radius: 4px; min-width: 44px; text-align: center;
+}
+.countdown.soon { background: var(--warning); }
+.countdown.urgent { background: var(--error); }
+.deadline-hint {
+  font-size: 11px; color: var(--text-secondary); text-align: center;
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light);
+}
+
+/* calendar */
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.cal-month-label { font-weight: 600; font-size: 13px; color: var(--text); }
 .cal-btns { display: flex; gap: 4px; }
 .cal-btn {
-  width: 28px; height: 28px;
-  background: none; border: 1px solid var(--border-light);
-  border-radius: 6px; cursor: pointer;
-  font-size: 16px; color: var(--text-secondary);
+  width: 26px; height: 26px; background: none; border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; font-size: 15px; color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
-  line-height: 1;
 }
-.cal-btn:hover { color: var(--text); border-color: #aaa; }
-
-.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.cal-weekday { text-align: center; font-size: 12px; color: var(--text-secondary); font-weight: 500; padding: 6px 0; }
+.cal-btn:hover { border-color: var(--primary); color: var(--primary); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-weekday { text-align: center; font-size: 11px; color: var(--text-secondary); font-weight: 500; padding: 4px 0; }
 .cal-day {
-  aspect-ratio: 1;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; color: var(--text-secondary);
-  border-radius: 6px;
+  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text); border-radius: 6px;
 }
-.cal-day.event { background: #fff7ed; color: #c2410c; font-weight: 500; }
+.cal-day.event { background: #fff7ed; color: #c2410c; font-weight: 600; }
 .cal-day.today { background: var(--primary); color: white; font-weight: 600; }
 .cal-day.empty { pointer-events: none; }
-
-.cal-legend { display: flex; align-items: center; gap: 16px; margin-top: auto; padding-top: 14px; flex-wrap: wrap; }
-.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
-.dot { width: 10px; height: 10px; border-radius: 50%; }
+.cal-legend { display: flex; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-light); }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
 .event-dot { background: #fff7ed; border: 1px solid #fed7aa; }
 .today-dot { background: var(--primary); }
-.legend-note { font-size: 12px; color: var(--text-secondary); margin-left: auto; }
 
-.reminders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-.reminder-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: #f8fafc; border-radius: 10px; }
-.reminder-icon { font-size: 22px; flex-shrink: 0; }
-.reminder-info { display: flex; flex-direction: column; flex: 1; gap: 2px; }
-.reminder-label { font-size: 14px; font-weight: 600; color: var(--text); }
-.reminder-date { font-size: 12px; color: var(--text-secondary); }
-.reminder-days { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; min-width: 52px; }
-.reminder-num { font-size: 32px; font-weight: 700; line-height: 1; color: #52c41a; }
-.reminder-unit { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
-.reminder-days.soon .reminder-num { color: #fa8c16; }
-.reminder-days.urgent .reminder-num { color: #f5222d; }
+/* download */
+.download-card {
+  background: white; border: 1px solid var(--border-light);
+  border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow);
+}
+.download-btn {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--primary); border: none; width: 100%;
+  padding: 10px 16px; border-radius: var(--radius);
+  color: white; font-weight: 600; font-size: 13px;
+  cursor: pointer; transition: all 0.15s; font-family: inherit;
+  box-shadow: 0 2px 8px rgba(22,119,255,0.35);
+}
+.download-btn i:first-child { font-size: 15px; }
+.download-btn span { flex: 1; text-align: left; }
+.arrow-icon { transition: transform 0.15s; font-size: 13px; }
+.download-btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(22,119,255,0.4); }
+.download-btn:hover .arrow-icon { transform: translateX(4px); }
+.download-hint { font-size: 11px; text-align: center; margin-top: 8px; color: var(--text-secondary); }
+
+/* toast */
+.toast {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: var(--text); color: white;
+  padding: 10px 22px; border-radius: 6px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-md); z-index: 9999; white-space: nowrap;
+}
+.toast-enter-active, .toast-leave-active { transition: opacity 0.25s, transform 0.25s; }
+.toast-enter-from, .toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(8px); }
+
+@media (max-width: 900px) { .main-grid { grid-template-columns: 1fr; } }
 </style>

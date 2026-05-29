@@ -4,13 +4,15 @@ import RegAdvisor from './components/RegAdvisor.vue'
 import FinanceSandbox from './components/FinanceSandbox.vue'
 import LegalAssistant from './components/LegalAssistant.vue'
 import ControlSandbox from './components/ControlSandbox.vue'
+import PolicyEngine from './components/PolicyEngine.vue'
 
-type ModuleId = 'reg' | 'finance' | 'control' | 'legal'
+type ModuleId = 'reg' | 'finance' | 'control' | 'legal' | 'policy'
 const currentModule = ref<ModuleId>('reg')
 const modules: { id: ModuleId; label: string; icon: string }[] = [
   { id: 'reg', label: '智能工商注册顾问', icon: '📋' },
   // { id: 'finance', label: '财税与成本沙盘', icon: '📊' },
   { id: 'control', label: '开业成本预估', icon: '🧪' },
+  { id: 'policy', label: '扶持政策检索', icon: '🎯' },
   { id: 'legal', label: '法务合规与合同助手', icon: '⚖️' },
 ]
 </script>
@@ -43,6 +45,7 @@ const modules: { id: ModuleId; label: string; icon: string }[] = [
       <RegAdvisor v-if="currentModule === 'reg'" />
       <FinanceSandbox v-else-if="currentModule === 'finance'" />
       <ControlSandbox v-else-if="currentModule === 'control'" />
+      <PolicyEngine v-else-if="currentModule === 'policy'" />
       <LegalAssistant v-else />
     </main>
   </div>
