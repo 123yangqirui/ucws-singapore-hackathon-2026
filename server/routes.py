@@ -21,7 +21,7 @@ from services import BusinessService
 
 router = APIRouter()
 
-@router.post("/page1/generate-names", response_model=CompanyBasicInfoResponse)
+@router.post("/generate-names", response_model=CompanyBasicInfoResponse)
 async def page1_generate_names(request: CompanyBasicInfoRequest):
     """
     第一页：公司基本信息
@@ -40,7 +40,7 @@ async def page1_generate_names(request: CompanyBasicInfoRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
 
-@router.post("/page2/check-approval", response_model=ApprovalInfoResponse)
+@router.post("/check-approval", response_model=ApprovalInfoResponse)
 async def page2_check_approval(request: ApprovalInfoRequest):
     """
     第二页：审批信息
@@ -59,7 +59,7 @@ async def page2_check_approval(request: ApprovalInfoRequest):
         raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
 
 
-@router.post("/page3/business-scope", response_model=BusinessScopeResponse)
+@router.post("/business-scope", response_model=BusinessScopeResponse)
 async def page3_business_scope(request: BusinessScopeRequest):
     """
     第三页：经营范围
@@ -78,7 +78,7 @@ async def page3_business_scope(request: BusinessScopeRequest):
         raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
 
 
-@router.post("/page4/company-type", response_model=EmployeeCountResponse)
+@router.post("/company-type", response_model=EmployeeCountResponse)
 async def page4_company_type(request: EmployeeCountRequest):
     """
     第四页：根据基础信息推荐公司类型
@@ -97,7 +97,7 @@ async def page4_company_type(request: EmployeeCountRequest):
         raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
 
 
-@router.post("/page5/capital-estimate", response_model=CapitalResponse)
+@router.post("/capital-estimate", response_model=CapitalResponse)
 async def page5_capital_estimate(request: CapitalRequest):
     """
     第五页：注册资本
@@ -116,7 +116,7 @@ async def page5_capital_estimate(request: CapitalRequest):
         raise HTTPException(status_code=500, detail=f"处理失败: {str(e)}")
 
 
-@router.post("/page6/address-recommend", response_model=AddressResponse)
+@router.post("/address-recommendations", response_model=AddressResponse)
 async def page6_address_recommend(request: AddressRequest):
     """
     第六页：注册地址
