@@ -23,7 +23,8 @@ class BusinessService:
     """业务逻辑服务 - 统一返回标准格式: {code, status, message, data}"""
     
     @staticmethod
-    async def process_page1_generate_names(request: CompanyBasicInfoRequest) -> CompanyBasicInfoResponse:
+    async def process_page1_generate_names(request: CompanyBasicInfoRequest) -> dict[
+        str, int | str | CompanyBasicInfoResponse]:
         """
         第一页：处理公司基本信息
         - 输入：公司名称、描述信息
@@ -69,7 +70,7 @@ class BusinessService:
             }
     
     @staticmethod
-    async def process_page2_check_approval(request: ApprovalInfoRequest) -> ApprovalInfoResponse:
+    async def process_page2_check_approval(request: ApprovalInfoRequest) -> dict[str, int | str | ApprovalInfoResponse]:
         """
         第二页：审批信息
         - 输入：主要经营范围,具体描述
@@ -121,7 +122,8 @@ class BusinessService:
                 )
             }
     @staticmethod
-    async def process_page3_business_scope(request: BusinessScopeRequest) -> BusinessScopeResponse:
+    async def process_page3_business_scope(request: BusinessScopeRequest) -> dict[
+        str, int | str | BusinessScopeResponse]:
         """
         第三页：生成经营范围
         - 一个formData结构，包含多个字段
@@ -179,7 +181,7 @@ class BusinessService:
 
 
     @staticmethod
-    async def process_page4_company_type(request: EmployeeCountRequest) -> EmployeeCountResponse:
+    async def process_page4_company_type(request: EmployeeCountRequest) -> dict[str, int | str | EmployeeCountResponse]:
         """
         第四页：根据基础信息推荐公司类型
         输入：公司人数、股东人数、前面已填写信息
@@ -235,7 +237,7 @@ class BusinessService:
     
     
     @staticmethod
-    async def process_page5_capital_estimate(request: CapitalRequest) -> CapitalResponse:
+    async def process_page5_capital_estimate(request: CapitalRequest) -> dict[str, int | str | CapitalResponse]:
         """
         第五页：预估注册资本
         - 输入：意向金额(万元)、前面已填写信息
@@ -288,7 +290,7 @@ class BusinessService:
             }
     
     @staticmethod
-    async def process_page6_address_recommend(request: AddressRequest) -> AddressResponse:
+    async def process_page6_address_recommend(request: AddressRequest) -> dict[str, int | str | AddressResponse]:
         """
         第六页：推荐注册地址类型
         根据主营业务、注册资本和省份推荐
