@@ -157,28 +157,23 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
   background: white;
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
-  min-width: 140px;
+  width: 196px;
   flex-shrink: 0;
-  position: fixed;
-  top: 80px;
-  left: 244px;
-  height: calc(100vh - 104px);
-  max-height: calc(100vh - 104px);
+  position: sticky;
+  top: 20px;
+  height: calc(100vh - 140px);
   overflow: hidden;
-  z-index: 10;
 }
 .progress-sidebar-inner {
   padding: 32px 28px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  flex: 1;
   height: 100%;
 }
 .advisor-content {
   flex: 1;
   min-width: 0;
-  margin-left: 180px;
 }
 .prog-step {
   display: flex;
