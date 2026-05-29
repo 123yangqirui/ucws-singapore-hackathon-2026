@@ -6,6 +6,36 @@ Base URL: `http://localhost:8080`
 
 ---
 
+## GET /api/documents
+
+获取“高频合同与文书”可下载文件目录。
+
+**Response 200**
+
+```json
+{
+  "documents": [
+    {
+      "id": "labor-contract",
+      "title": "劳动合同",
+      "filename": "劳动合同.docx",
+      "downloadUrl": "/api/documents/labor-contract/download",
+      "available": true
+    }
+  ]
+}
+```
+
+## GET /api/documents/{document_id}/download
+
+下载指定文书文件。`document_id` 使用 `/api/documents` 返回的 `id`。
+
+## GET /api/documents/download-all
+
+打包下载全部可用文书模板，返回 zip 文件。
+
+---
+
 ## POST /api/generate-names
 
 根据用户填写的公司名称偏好（字号）和业务描述，生成候选公司全称。

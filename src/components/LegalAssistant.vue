@@ -1,5 +1,26 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+
+type DocumentMeta = {
+  id: string
+  title: string
+  filename: string
+  downloadUrl: string
+  available: boolean
+}
+
+type TemplateCard = {
+  icon: string
+  title: string
+  sub: string
+  fileId: string
+}
+
+type TemplateGroup = {
+  icon: string
+  title: string
+  cards: TemplateCard[]
+}
 
 const today = new Date()
 const currentYear = ref(today.getFullYear())
@@ -56,51 +77,104 @@ const calendarDays = computed(() => {
   return cells
 })
 
-const groups = [
+const documents = ref<Record<string, DocumentMeta>>({})
+const documentsLoading = ref(true)
+
+const groups: TemplateGroup[] = [
   {
     icon: 'fas fa-user-check', title: '招人才',
     cards: [
-      { icon: 'fas fa-envelope-open-text', title: 'Offer letter', sub: '录用意向书' },
-      { icon: 'fas fa-clipboard-list', title: '录用条件确认书', sub: '试用期标准' },
-      { icon: 'fas fa-id-card', title: '入职信息登记表', sub: '员工档案' },
+      { icon: 'fas fa-envelope-open-text', title: 'Offer letter', sub: '录用意向书', fileId: 'offer-letter' },
+      { icon: 'fas fa-clipboard-list', title: '录用条件确认书', sub: '试用期标准', fileId: 'employment-condition' },
+      { icon: 'fas fa-id-card', title: '新员工入职登记表', sub: '员工档案', fileId: 'onboarding-form' },
+      { icon: 'fas fa-pen-to-square', title: '应聘登记表', sub: '候选人信息', fileId: 'application-form' },
     ],
   },
   {
     icon: 'fas fa-handshake', title: '签合同',
     cards: [
-      { icon: 'fas fa-file-contract', title: '劳动合同', sub: '正式/固定期限' },
-      { icon: 'fas fa-user-friends', title: '兼职协议', sub: '非全日制用工' },
-      { icon: 'fas fa-briefcase', title: '劳务协议', sub: '劳务合作' },
+      { icon: 'fas fa-file-contract', title: '劳动合同', sub: '正式/固定期限', fileId: 'labor-contract' },
+      { icon: 'fas fa-user-friends', title: '非全日制用工协议书', sub: '兼职用工', fileId: 'part-time-agreement' },
+      { icon: 'fas fa-lock', title: '保密协议', sub: '商业机密', fileId: 'confidentiality-agreement' },
+      { icon: 'fas fa-ban', title: '竞业限制协议', sub: '高管约束', fileId: 'non-compete-agreement' },
     ],
   },
   {
     icon: 'fas fa-chart-simple', title: '做管理',
     cards: [
-      { icon: 'fas fa-table-list', title: '工资表', sub: '薪酬模板' },
-      { icon: 'fas fa-calendar-week', title: '考勤表', sub: '月度统计' },
-      { icon: 'fas fa-book', title: '考勤休假管理制度', sub: '制度范本' },
-      { icon: 'fas fa-address-book', title: '职工名册', sub: '花名册合规' },
-      { icon: 'fas fa-lock', title: '保密协议', sub: '商业机密' },
-      { icon: 'fas fa-ban', title: '竞业限制协议', sub: '高管约束' },
-      { icon: 'fas fa-building', title: '员工手册', sub: '通用制度' },
-      { icon: 'fas fa-chart-line', title: '绩效评估报告', sub: 'KPI考核' },
+      { icon: 'fas fa-table-list', title: '工资表', sub: '薪酬模板', fileId: 'salary-table' },
+      { icon: 'fas fa-calendar-week', title: '考勤表', sub: '月度统计', fileId: 'attendance-sheet' },
+      { icon: 'fas fa-book', title: '考勤休假管理制度', sub: '制度范本', fileId: 'attendance-leave-policy' },
+      { icon: 'fas fa-address-book', title: '职工名册', sub: '花名册合规', fileId: 'employee-roster' },
+      { icon: 'fas fa-building', title: '员工管理手册', sub: '通用制度', fileId: 'employee-handbook' },
+      { icon: 'fas fa-chart-line', title: '绩效评估报告', sub: 'KPI考核', fileId: 'performance-review' },
     ],
   },
   {
     icon: 'fas fa-door-open', title: '办离职',
     cards: [
-      { icon: 'fas fa-user-minus', title: '员工离职审批表', sub: '离职流程' },
-      { icon: 'fas fa-certificate', title: '离职证明', sub: '法定凭证' },
-      { icon: 'fas fa-file-excel', title: '终止劳动合同通知书', sub: '合同到期/解除' },
+      { icon: 'fas fa-user-minus', title: '员工离职审批表（辞职）', sub: '主动离职', fileId: 'resignation-approval' },
+      { icon: 'fas fa-user-xmark', title: '员工离职审批表（辞退）', sub: '辞退流程', fileId: 'dismissal-approval' },
+      { icon: 'fas fa-certificate', title: '离职证明', sub: '法定凭证', fileId: 'departure-certificate' },
+      { icon: 'fas fa-file-circle-xmark', title: '终止劳动合同通知书', sub: '合同到期/解除', fileId: 'contract-termination-notice' },
     ],
   },
 ]
 
-const downloadToast = ref(false)
-function handleDownload() {
-  downloadToast.value = true
-  setTimeout(() => { downloadToast.value = false }, 2800)
+const toastMessage = ref('')
+let toastTimer: number | undefined
+
+function showToast(message: string) {
+  toastMessage.value = message
+  if (toastTimer) window.clearTimeout(toastTimer)
+  toastTimer = window.setTimeout(() => { toastMessage.value = '' }, 2800)
 }
+
+function startDownload(url: string, filename?: string) {
+  const link = document.createElement('a')
+  link.href = url
+  if (filename) link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}
+
+function isCardAvailable(card: TemplateCard) {
+  const document = documents.value[card.fileId]
+  return documentsLoading.value || document?.available === true
+}
+
+async function loadDocuments() {
+  try {
+    const response = await fetch('/api/documents')
+    if (!response.ok) throw new Error('文书目录加载失败')
+    const payload = await response.json() as { documents: DocumentMeta[] }
+    documents.value = Object.fromEntries(payload.documents.map(document => [document.id, document]))
+  } catch (error) {
+    console.error(error)
+    showToast('文书目录暂时无法加载，请稍后重试')
+  } finally {
+    documentsLoading.value = false
+  }
+}
+
+function handleDocumentDownload(card: TemplateCard) {
+  const document = documents.value[card.fileId]
+  if (!isCardAvailable(card)) {
+    showToast(`未找到文件：${card.title}`)
+    return
+  }
+
+  startDownload(document?.downloadUrl ?? `/api/documents/${card.fileId}/download`, document?.filename)
+  showToast(`正在下载：${card.title}`)
+}
+
+function handleDownloadAll() {
+  startDownload('/api/documents/download-all', '高频合同与文书模板.zip')
+  showToast('正在打包下载全套合同/制度/表单模板')
+}
+
+onMounted(loadDocuments)
 </script>
 
 <template>
@@ -117,11 +191,19 @@ function handleDownload() {
         <div v-for="g in groups" :key="g.title" class="group-block">
           <div class="group-title"><i :class="g.icon"></i> {{ g.title }}</div>
           <div class="cards-grid">
-            <div v-for="c in g.cards" :key="c.title" class="template-card">
+            <button
+              v-for="c in g.cards"
+              :key="c.fileId"
+              class="template-card"
+              :class="{ unavailable: !isCardAvailable(c) }"
+              :disabled="!isCardAvailable(c)"
+              type="button"
+              @click="handleDocumentDownload(c)"
+            >
               <i :class="c.icon"></i>
               <h4>{{ c.title }}</h4>
               <p>{{ c.sub }}</p>
-            </div>
+            </button>
           </div>
         </div>
       </div>
@@ -176,7 +258,7 @@ function handleDownload() {
 
         <!-- 一键下载 -->
         <div class="download-card">
-          <button class="download-btn" @click="handleDownload">
+          <button class="download-btn" @click="handleDownloadAll">
             <i class="fas fa-download"></i>
             <span>📁 一键下载全套模板</span>
             <i class="fas fa-arrow-right arrow-icon"></i>
@@ -190,8 +272,8 @@ function handleDownload() {
 
     <!-- Toast -->
     <Transition name="toast">
-      <div v-if="downloadToast" class="toast">
-        ⚡ 正在打包全套合同/制度/表单模板 (共56份) … 演示模式
+      <div v-if="toastMessage" class="toast">
+        ⚡ {{ toastMessage }}
       </div>
     </Transition>
   </div>
@@ -223,11 +305,17 @@ function handleDownload() {
   background: white; border: 1px solid var(--border-light);
   border-radius: var(--radius); padding: 20px 16px 16px;
   cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow);
+  text-align: left; font-family: inherit;
 }
 .template-card i { font-size: 28px; color: var(--primary); margin-bottom: 12px; display: block; }
 .template-card h4 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
 .template-card p { font-size: 12px; color: var(--text-secondary); }
 .template-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.template-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.template-card.unavailable {
+  cursor: not-allowed; opacity: 0.55; transform: none;
+}
+.template-card.unavailable:hover { border-color: var(--border-light); box-shadow: var(--shadow); }
 
 /* ---- 右侧 ---- */
 .right-sidebar { display: flex; flex-direction: column; gap: 16px; }

@@ -57,7 +57,7 @@ def create_application() -> FastAPI:
         if exc.status_code == 405:
             return JSONResponse(
                 status_code=405,
-                content={"detail": "仅支持 POST 请求"}
+                content={"detail": "请求方法不支持"}
             )
         return JSONResponse(
             status_code=exc.status_code,

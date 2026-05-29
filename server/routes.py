@@ -1,5 +1,11 @@
-from fastapi import APIRouter, HTTPException
+from io import BytesIO
+from pathlib import Path
 from typing import List
+from urllib.parse import quote
+from zipfile import ZIP_DEFLATED, ZipFile
+
+from fastapi import APIRouter, HTTPException
+from fastapi.responses import FileResponse, StreamingResponse
 
 #导入格式模板
 from schemas import (
@@ -22,6 +28,90 @@ from schemas import (
 from services import BusinessService
 
 router = APIRouter()
+
+DOCUMENT_FILE_DIR = Path(__file__).resolve().parents[1] / "public" / "file"
+DOCUMENTS = [
+    {"id": "offer-letter", "title": "Offer letter", "filename": "offer_letter.docx"},
+    {"id": "employment-condition", "title": "录用条件确认书", "filename": "录用条件确认书.docx"},
+    {"id": "onboarding-form", "title": "新员工入职登记表", "filename": "新员工入职登记表.docx"},
+    {"id": "application-form", "title": "应聘登记表", "filename": "应聘登记表.docx"},
+    {"id": "labor-contract", "title": "劳动合同", "filename": "劳动合同.docx"},
+    {"id": "part-time-agreement", "title": "非全日制用工协议书", "filename": "非全日制用工协议书.docx"},
+    {"id": "confidentiality-agreement", "title": "保密协议", "filename": "保密协议.docx"},
+    {"id": "non-compete-agreement", "title": "竞业限制协议", "filename": "竞业限制协议.docx"},
+    {"id": "salary-table", "title": "工资表", "filename": "工资表.xlsx"},
+    {"id": "attendance-sheet", "title": "考勤表", "filename": "考勤表.xlsx"},
+    {"id": "attendance-leave-policy", "title": "考勤休假管理制度", "filename": "考勤休假管理制度.docx"},
+    {"id": "employee-roster", "title": "职工名册", "filename": "职工名册.xlsx"},
+    {"id": "employee-handbook", "title": "员工管理手册", "filename": "员工管理手册.docx"},
+    {"id": "performance-review", "title": "绩效评估报告", "filename": "绩效评估报告.docx"},
+    {"id": "resignation-approval", "title": "员工离职审批表（辞职）", "filename": "员工离职审批表（辞职）.docx"},
+    {"id": "dismissal-approval", "title": "员工离职审批表（辞退）", "filename": "员工离职审批表（辞退）.docx"},
+    {"id": "departure-certificate", "title": "离职证明", "filename": "离职证明.docx"},
+    {"id": "contract-termination-notice", "title": "终止劳动合同通知书", "filename": "终止劳动合同通知书.docx"},
+]
+
+
+def get_document_or_404(document_id: str) -> dict:
+    for document in DOCUMENTS:
+        if document["id"] == document_id:
+            return document
+    raise HTTPException(status_code=404, detail="文书不存在")
+
+
+def get_document_path_or_404(document: dict) -> Path:
+    file_path = (DOCUMENT_FILE_DIR / document["filename"]).resolve()
+    if DOCUMENT_FILE_DIR.resolve() not in file_path.parents or not file_path.is_file():
+        raise HTTPException(status_code=404, detail="文书文件不存在")
+    return file_path
+
+
+@router.get("/documents")
+async def list_documents():
+    return {
+        "documents": [
+            {
+                **document,
+                "downloadUrl": f"/api/documents/{document['id']}/download",
+                "available": (DOCUMENT_FILE_DIR / document["filename"]).is_file(),
+            }
+            for document in DOCUMENTS
+        ]
+    }
+
+
+@router.get("/documents/{document_id}/download")
+async def download_document(document_id: str):
+    document = get_document_or_404(document_id)
+    file_path = get_document_path_or_404(document)
+    return FileResponse(
+        path=file_path,
+        media_type="application/octet-stream",
+        filename=document["filename"],
+    )
+
+
+@router.get("/documents/download-all")
+async def download_all_documents():
+    buffer = BytesIO()
+    files_written = 0
+
+    with ZipFile(buffer, "w", ZIP_DEFLATED) as zip_file:
+        for document in DOCUMENTS:
+            file_path = (DOCUMENT_FILE_DIR / document["filename"]).resolve()
+            if DOCUMENT_FILE_DIR.resolve() in file_path.parents and file_path.is_file():
+                zip_file.write(file_path, arcname=document["filename"])
+                files_written += 1
+
+    if files_written == 0:
+        raise HTTPException(status_code=404, detail="暂无可下载文书")
+
+    buffer.seek(0)
+    archive_name = "高频合同与文书模板.zip"
+    headers = {
+        "Content-Disposition": f"attachment; filename*=UTF-8''{quote(archive_name)}"
+    }
+    return StreamingResponse(buffer, media_type="application/zip", headers=headers)
 
 @router.post("/generate-names", response_model=CompanyBasicInfoResponse)
 async def page1_generate_names(request: CompanyBasicInfoRequest):
