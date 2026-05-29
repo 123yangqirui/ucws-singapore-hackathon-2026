@@ -40,11 +40,11 @@ class ApprovalInfoResponse(BaseModel):
 
 # 先定义内部 formData 结构
 class BusinessScopeFormData(BaseModel):
-    business: str = Field(..., description="主营业务类型")
-    people: int = Field(..., description="人数")
-    shareholder: int = Field(..., description="股东数")
-    namePref: str = Field(..., description="公司名称偏好")
-    name: str = Field(..., description="最终公司名称")
+    business: Optional[str] = Field(None, description="主营业务类型")
+    people: Optional[int] = Field(None, description="人数")
+    shareholder: Optional[int] = Field(None, description="股东数")
+    namePref: Optional[str] = Field(None, description="公司名称偏好")
+    name: Optional[str] = Field(None, description="最终公司名称")
 
 # 外层请求（完整结构）
 class BusinessScopeRequest(BaseModel):
@@ -66,10 +66,10 @@ class BusinessScopeData(BaseModel):
 
 class EmployeeCountFormData(BaseModel):
     """公司人数、股东人数、前面已填写信息"""
-    business: str = Field(..., description="主营业务类型")
-    namePref: str = Field(..., description="公司名称偏好")
-    name: str = Field(..., description="最终公司名称")
-    scope: BusinessScopeData = Field(..., description="经营范围")
+    business: Optional[str] = Field(None, description="主营业务类型")
+    namePref: Optional[str] = Field(None, description="公司名称偏好")
+    name: Optional[str] = Field(None, description="最终公司名称")
+    scope: Optional[BusinessScopeData] = Field(None, description="经营范围")
 
 
 class EmployeeCountRequest(BaseModel):
@@ -92,13 +92,13 @@ class ScopeData(BaseModel):
     others: List[str] = Field(..., description="其他经营范围列表")
 
 class CapitalFormData(BaseModel):
-    business: str = Field(..., description="主营业务类型")
-    people: int = Field(..., description="公司人数")
-    shareholder: int = Field(..., description="股东人数")
-    companyType: str = Field(..., description="公司类型")
-    namePref: str = Field(..., description="公司名称偏好")
-    name: str = Field(..., description="最终公司全称")
-    scope: ScopeData = Field(..., description="经营范围")
+    business: Optional[str] = Field(None, description="主营业务类型")
+    people: Optional[int] = Field(None, description="公司人数")
+    shareholder: Optional[int] = Field(None, description="股东人数")
+    companyType: Optional[str] = Field(None, description="公司类型")
+    namePref: Optional[str] = Field(None, description="公司名称偏好")
+    name: Optional[str] = Field(None, description="最终公司全称")
+    scope: Optional[ScopeData] = Field(None, description="经营范围")
 
 class CapitalRequest(BaseModel):
     """请求：意向注册资本 + 完整历史表单数据"""
