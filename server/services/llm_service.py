@@ -8,7 +8,7 @@ from config import settings
 
 class LLMService:
     """大模型服务"""
-    
+
     def __init__(self):
         self.api_key = settings.LLM_API_KEY
         self.base_url = settings.LLM_BASE_URL
@@ -17,7 +17,7 @@ class LLMService:
             api_key=self.api_key,
             base_url=self.base_url,
         )
-    
+
     async def chat(
             self,
             messages: List[Dict[str, str]],
@@ -30,10 +30,10 @@ class LLMService:
             model=self.model,
             messages=messages,
             response_format={"type": "json_object"}
-            )
+        )
         result = response.choices[0].message.content
         return result
-    
+
 
 # 全局LLM服务实例
 llm_service = LLMService()
