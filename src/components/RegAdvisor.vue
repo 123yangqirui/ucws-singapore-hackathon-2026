@@ -104,26 +104,28 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
 
   <div v-else-if="steps.length" class="advisor-layout">
     <div class="progress-sidebar">
-      <button
-        v-for="(s, i) in steps"
-        :key="s.id"
-        class="prog-step"
-        :class="{
-          active: i === currentStep,
-          done: i < currentStep,
-          reachable: i <= currentStep || !!(formData as any)[steps[i-1]?.id]
-        }"
-        @click="goToStep(i)"
-      >
-        <div class="prog-dot-wrap">
-          <span class="prog-dot">
-            <span v-if="(formData as any)[s.id] !== undefined && (formData as any)[s.id] !== '' && i !== currentStep">✓</span>
-            <span v-else>{{ i + 1 }}</span>
-          </span>
-          <span class="prog-line" v-if="i < steps.length - 1" />
-        </div>
-        <span class="prog-label">{{ s.title }}</span>
-      </button>
+      <div class="progress-sidebar-inner">
+        <button
+          v-for="(s, i) in steps"
+          :key="s.id"
+          class="prog-step"
+          :class="{
+            active: i === currentStep,
+            done: i < currentStep,
+            reachable: i <= currentStep || !!(formData as any)[steps[i-1]?.id]
+          }"
+          @click="goToStep(i)"
+        >
+          <div class="prog-dot-wrap">
+            <span class="prog-dot">
+              <span v-if="(formData as any)[s.id] !== undefined && (formData as any)[s.id] !== '' && i !== currentStep">✓</span>
+              <span v-else>{{ i + 1 }}</span>
+            </span>
+            <span class="prog-line" v-if="i < steps.length - 1" />
+          </div>
+          <span class="prog-label">{{ s.title }}</span>
+        </button>
+      </div>
     </div>
 
     <StepPage
@@ -155,24 +157,40 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
   background: white;
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
-  padding: 32px 28px;
   min-width: 140px;
   flex-shrink: 0;
+  position: fixed;
+  top: 80px;
+  left: 244px;
+  height: calc(100vh - 104px);
+  max-height: calc(100vh - 104px);
+  overflow: hidden;
+  z-index: 10;
+}
+.progress-sidebar-inner {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  height: 100%;
 }
 .advisor-content {
   flex: 1;
   min-width: 0;
+  margin-left: 180px;
 }
 .prog-step {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 10px;
   background: none;
   border: none;
   cursor: default;
   padding: 0;
   text-align: left;
+  flex: 1;
 }
 .prog-step.reachable { cursor: pointer; }
 .prog-dot-wrap {
@@ -183,7 +201,8 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
 }
 .prog-line {
   width: 2px;
-  height: 54px;
+  flex: 1;
+  min-height: 20px;
   background: var(--border-light);
   margin: 2px 0;
 }
