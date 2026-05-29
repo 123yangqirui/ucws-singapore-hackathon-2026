@@ -226,7 +226,7 @@ function exportPdf() {
 }
 .org-img {
   display: block;
-  max-width: 560px;
+  max-width: 420px;
   width: 100%;
   border-radius: 8px;
   border: 1px solid var(--border-light);

@@ -103,28 +103,30 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
   />
 
   <div v-else-if="steps.length" class="advisor-layout">
-    <div class="progress-sidebar">
-      <div class="progress-sidebar-inner">
-        <button
-          v-for="(s, i) in steps"
-          :key="s.id"
-          class="prog-step"
-          :class="{
-            active: i === currentStep,
-            done: i < currentStep,
-            reachable: i <= currentStep || !!(formData as any)[steps[i-1]?.id]
-          }"
-          @click="goToStep(i)"
-        >
-          <div class="prog-dot-wrap">
-            <span class="prog-dot">
-              <span v-if="(formData as any)[s.id] !== undefined && (formData as any)[s.id] !== '' && i !== currentStep">✓</span>
-              <span v-else>{{ i + 1 }}</span>
-            </span>
-            <span class="prog-line" v-if="i < steps.length - 1" />
-          </div>
-          <span class="prog-label">{{ s.title }}</span>
-        </button>
+    <div class="sidebar-placeholder">
+      <div class="progress-sidebar">
+        <div class="progress-sidebar-inner">
+          <button
+            v-for="(s, i) in steps"
+            :key="s.id"
+            class="prog-step"
+            :class="{
+              active: i === currentStep,
+              done: i < currentStep,
+              reachable: i <= currentStep || !!(formData as any)[steps[i-1]?.id]
+            }"
+            @click="goToStep(i)"
+          >
+            <div class="prog-dot-wrap">
+              <span class="prog-dot">
+                <span v-if="(formData as any)[s.id] !== undefined && (formData as any)[s.id] !== '' && i !== currentStep">✓</span>
+                <span v-else>{{ i + 1 }}</span>
+              </span>
+              <span class="prog-line" v-if="i < steps.length - 1" />
+            </div>
+            <span class="prog-label">{{ s.title }}</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -151,6 +153,10 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
   align-items: flex-start;
   width: 100%;
 }
+.sidebar-placeholder {
+  width: 196px;
+  flex-shrink: 0;
+}
 .progress-sidebar {
   display: flex;
   flex-direction: column;
@@ -158,10 +164,10 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
   width: 196px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 20px;
-  height: calc(100vh - 140px);
+  position: fixed;
+  top: 80px;
+  left: 244px;
+  height: calc(100vh - 104px);
   overflow: hidden;
 }
 .progress-sidebar-inner {

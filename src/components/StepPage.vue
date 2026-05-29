@@ -704,7 +704,7 @@ function goForward() {
           <img class="org-image" src="/c_arch.jpg" alt="组织架构设计图" />
         </div>
         <div class="org-tips">
-          <span class="org-tips-label">小tips</span>
+          <span class="org-tips-label">Tips: </span>
           <span v-if="orgTipsLoading" class="org-tips-text muted"><span class="spinner"></span> 正在生成建议...</span>
           <span v-else class="org-tips-text">{{ orgTips || '待定' }}</span>
         </div>
@@ -1303,14 +1303,14 @@ function goForward() {
 .org-image {
   display: block;
   width: 100%;
-  max-height: 520px;
+  max-height: 280px;
   object-fit: contain;
   background: white;
 }
 .org-tips {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 6px;
   padding: 12px 14px;
   border: 1px solid #ffe58f;
   border-radius: 8px;
@@ -1320,14 +1320,14 @@ function goForward() {
   color: #8c6d1f;
   font-size: 13px;
   font-weight: 800;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .org-tips-text {
   color: var(--text);
   font-size: 13px;
   font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+  line-height: 1.6;
 }
 .org-tips-text.muted { color: var(--text-secondary); font-weight: 400; }
 
