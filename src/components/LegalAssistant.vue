@@ -185,7 +185,6 @@ onMounted(loadDocuments)
       <div class="templates-section">
         <div class="section-header">
           <h2 class="section-h2"><i class="fas fa-file-signature"></i> 高频合同与文书</h2>
-          <span class="view-link">查看全部 <i class="fas fa-arrow-right"></i></span>
         </div>
 
         <div v-for="g in groups" :key="g.title" class="group-block">
@@ -302,7 +301,8 @@ onMounted(loadDocuments)
 
 .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
 .template-card {
-  background: white; border: 1px solid var(--border-light);
+  background: white;
+  border: 1px solid var(--border-light);
   border-radius: var(--radius); padding: 20px 16px 16px;
   cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow);
   text-align: left; font-family: inherit;

@@ -70,7 +70,6 @@ const extra = ref('')
 .card {
   background: white;
   border-radius: var(--radius);
-  border: 1px solid var(--border-light);
   box-shadow: var(--shadow);
   padding: 28px;
   margin-bottom: 20px;

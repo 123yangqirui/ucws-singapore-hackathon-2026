@@ -21,6 +21,20 @@ from schemas import (
 from .llm_service import llm_service
 
 
+# 国民经济行业分类大类（A~T），需与前端 INDUSTRIES 列表保持一致
+INDUSTRY_CATEGORIES = [
+    "(A) 农、林、牧、渔业", "(B) 采矿业", "(C) 制造业",
+    "(D) 电力、热力、燃气及水生产和供应业", "(E) 建筑业",
+    "(F) 批发和零售业", "(G) 交通运输、仓储和邮政业",
+    "(H) 住宿和餐饮业", "(I) 信息传输、软件和信息技术服务业",
+    "(J) 金融业", "(K) 房地产业", "(L) 租赁和商务服务业",
+    "(M) 科学研究和技术服务业", "(N) 水利、环境和公共设施管理业",
+    "(O) 居民服务、修理和其他服务业", "(P) 教育",
+    "(Q) 卫生和社会工作", "(R) 文化、体育和娱乐业",
+    "(S) 公共管理、社会保障和社会组织", "(T) 国际组织",
+]
+
+
 class BusinessService:
     """业务逻辑服务 - 统一返回标准格式: {code, status, message, data}"""
     
@@ -34,19 +48,24 @@ class BusinessService:
         """
         # 构建一组提示词：系统提示词、用户提示词、综合消息
         system_prompt = """你是一位专业的公司注册顾问。
-        Please parse the "names" and output them in JSON format.
+        请根据用户输入生成公司名称建议，并从给定的行业大类列表中选出最贴合用户业务的一个，作为推荐的主营业务。
+        Please parse the "names" and "recommendedBusiness" and output them in JSON format.
         EXAMPLE JSON OUTPUT:
         {
-            "names": ["星禾云创科技有限公司", "璀璨星禾商务有限公司", "星禾流动网络有限公司"]
+            "names": ["星禾云创科技有限公司", "璀璨星禾商务有限公司", "星禾流动网络有限公司"],
+            "recommendedBusiness": "(I) 信息传输、软件和信息技术服务业"
         }
         """
+        industries_text = "\n".join(INDUSTRY_CATEGORIES)
         prompt = f"""
                 请根据用户的输入参考名称和描述信息作为参考。
-                生成3-5个公司包含用户偏好词的名称设计，用户偏好词可以在名称的任意位置，生成的名称要符合中国大陆的公司命名规范，且尽量体现业务特点，不要过于通用。
+                1. 生成3-5个公司包含用户偏好词的名称设计，用户偏好词可以在名称的任意位置，生成的名称要符合中国大陆的公司命名规范，且尽量体现业务特点，不要过于通用。
+                2. 从以下国民经济行业分类大类中，选择最贴合用户业务的一个作为推荐主营业务，recommendedBusiness 必须与列表中的某一项完全一致（包含括号字母前缀）：
+                {industries_text}
                 用户偏好词：[{request.namePref}]
                 用户的业务描述：{request.desc}
                 """
-        
+
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": prompt}
@@ -60,7 +79,10 @@ class BusinessService:
                 "code": 200,
                 "status": "success",
                 "message": "生成公司名称成功",
-                "data": CompanyBasicInfoResponse(names=data.get("names", []))
+                "data": CompanyBasicInfoResponse(
+                    names=data.get("names", []),
+                    recommendedBusiness=data.get("recommendedBusiness", ""),
+                )
             }
         except Exception as e:
             # 返回默认响应
@@ -69,7 +91,8 @@ class BusinessService:
                 "status": "error",
                 "message": f"生成公司名称失败: {str(e)}",
                 "data": CompanyBasicInfoResponse(
-                    names=["名称一", "名称二", "名称三", "名称四", "名称五"]
+                    names=["名称一", "名称二", "名称三", "名称四", "名称五"],
+                    recommendedBusiness="",
                 )
             }
     
@@ -251,7 +274,7 @@ class BusinessService:
         Please parse the "estimatedAmount" and "explanation" and output them in JSON format.
         EXAMPLE JSON OUTPUT:
         {
-            "estimatedAmount": 预估金额(万元),
+            "estimatedAmount": 金额(万元),
             "explanation": "100字以内的建议与解释"
         }
         """
@@ -270,7 +293,7 @@ class BusinessService:
            · 若无特殊许可，跳过此条。
         2. 投入资金与注册资本的关系：
            · 注册资本≠投入资金。投入资金通常包括开办费、设备、运营流动资金等。
-           · 建议注册资本控制在投入资金的30%~70%之间：
+           · **建议注册资本控制在投入资金的30%~70%之间：**
              · 比例过低（<30%）：客户、合作方可能认为公司实力不足，影响招投标或信任。
              · 比例过高（>100%）：股东面临更大的认缴责任，且超出实际能力可能被认定为“天价资本”引发风险。
            · 若用户投入资金<10万，注册资本可等于或略高于投入资金（如投入5万，建议注册资本5万），因低资本下认缴压力小。
@@ -282,7 +305,7 @@ class BusinessService:
            · 提醒用户：注册资本为认缴制，不要求立即实缴，但需在章程中明确期限内缴足（5年）。
            · 建议数字不宜超过用户未来3~5年可承受的实缴能力。
         -----
-        意向注册资本：{request.capitalIntention}（万元）
+        注册资本意向（认缴金额）：{request.capitalIntention}（万元）
         主营业务类型：{request.formData.business}
         人数：{request.formData.people}
         股东数量：{request.formData.shareholder}
@@ -292,6 +315,7 @@ class BusinessService:
         主营业务：{request.formData.scope.main}
         其他经营范围：{request.formData.scope.others}
         """
+        print(prompt)
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -306,7 +330,7 @@ class BusinessService:
                 "status": "success",
                 "message": "预估注册资本成功",
                 "data": CapitalResponse(
-                    estimatedAmount=float(data.get("estimatedAmount", request.capitalIntention)),
+                    estimatedAmount=float(data.get("estimatedAmount")),
                     explanation=data.get("explanation", "")
                 )
             }

@@ -15,6 +15,7 @@ class CompanyBasicInfoRequest(BaseModel):
 class CompanyBasicInfoResponse(BaseModel):
     """第一页响应"""
     names: List[str] = Field(default_factory=list, description="公司名称建议列表")
+    recommendedBusiness: str = Field("", description="AI 推荐的主营业务（国民经济行业分类大类，A~T，需与前端行业列表一致）")
 
 # ============== 第二页：check-approval ==============
 # 根据所选行业大类，返回该行业是否涉及前置/后置审批及具体说明。

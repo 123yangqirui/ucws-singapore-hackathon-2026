@@ -161,8 +161,8 @@ steps.value = STEP_SKELETONS.map(s => ({ ...s, options: [] }))
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: var(--radius);
-  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
   width: 196px;
   position: fixed;
   top: 80px;

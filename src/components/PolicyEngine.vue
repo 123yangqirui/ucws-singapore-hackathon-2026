@@ -512,7 +512,7 @@ function deadlineColor(days: number): string {
 /* generic card */
 .card {
   background: white; border-radius: var(--radius);
-  border: 1px solid var(--border-light); box-shadow: var(--shadow);
+  box-shadow: var(--shadow);
   padding: 24px;
 }
 .card-header {

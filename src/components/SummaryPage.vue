@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import type { StepData, BaseFormData } from './RegAdvisor.vue'
 
 const props = defineProps<{
@@ -7,6 +8,9 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{ restart: [] }>()
+
+// 公司人数为 1 人时展示 image_2，否则展示 image_1
+const orgImage = computed(() => (props.formData.people === 1 ? '/image_2.png' : '/image_1.png'))
 
 const STEP_LABELS: Record<string, string> = {
   name: '公司名称',
@@ -39,6 +43,10 @@ const FULL_FLOW: { id: string; title: string; icon: string; desc: string }[] = [
   { id: 'org',     title: '组织架构设计', icon: '🏗️', desc: '设置法定代表人、董事、监事等岗位' },
   { id: 'license', title: '领取营业执照', icon: '📄', desc: '提交工商登记申请并领取营业执照' },
   { id: 'seal',    title: '刻章与备案',   icon: '🔏', desc: '刻制公章、财务章、法人章等并到公安备案' },
+  { id: 'bank',    title: '银行开户',     icon: '🏦', desc: '开立公司基本存款账户用于日常资金往来' },
+  { id: 'tax',     title: '税务登记',     icon: '🧾', desc: '完成税种核定并办理税务报到' },
+  { id: 'social',  title: '社保开户',     icon: '🛡️', desc: '开通社保账户并为员工办理参保登记' },
+  { id: 'operate', title: '公司营业',     icon: '🚀', desc: '完成全部登记，公司正式开业经营' },
 ]
 
 function exportPdf() {
@@ -64,6 +72,26 @@ function exportPdf() {
       </div>
     </div>
 
+    <!-- Full registration flow -->
+    <div class="flow-panel">
+      <div class="panel-title">完整注册流程</div>
+      <div class="flow-list">
+        <div
+          v-for="(step, i) in FULL_FLOW"
+          :key="step.id"
+          class="flow-card"
+          :class="{ 'flow-card-org': step.id === 'org' }"
+        >
+          <div class="flow-num">{{ i + 1 }}</div>
+          <div class="flow-head">
+            <span class="flow-icon">{{ step.icon }}</span>
+            <span class="flow-title">{{ step.title }}</span>
+          </div>
+          <div class="flow-desc">{{ step.desc }}</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Info + Org layout (vertical stack) -->
     <div class="main-layout">
       <!-- step results -->
@@ -86,30 +114,8 @@ function exportPdf() {
       <div class="org-panel">
         <div class="panel-title">组织架构设计</div>
         <div class="org-img-wrap">
-          <img src="/c_arch.jpg" alt="组织架构图" class="org-img" />
+          <img :src="orgImage" alt="组织架构图" class="org-img" />
         </div>
-      </div>
-    </div>
-
-    <!-- Full registration flow (8 steps) -->
-    <div class="flow-panel">
-      <div class="panel-title">完整注册流程</div>
-      <div class="flow-list">
-        <template v-for="(step, i) in FULL_FLOW" :key="step.id">
-          <div class="flow-card">
-            <div class="flow-num">{{ i + 1 }}</div>
-            <div class="flow-head">
-              <span class="flow-icon">{{ step.icon }}</span>
-              <span class="flow-title">{{ step.title }}</span>
-            </div>
-            <div class="flow-desc">{{ step.desc }}</div>
-          </div>
-          <div v-if="i < FULL_FLOW.length - 1" class="flow-arrow" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="9 6 15 12 9 18" />
-            </svg>
-          </div>
-        </template>
       </div>
     </div>
 
@@ -226,7 +232,7 @@ function exportPdf() {
 }
 .org-img {
   display: block;
-  max-width: 420px;
+  max-width: 760px;
   width: 100%;
   border-radius: 8px;
   border: 1px solid var(--border-light);
@@ -239,7 +245,6 @@ function exportPdf() {
 .flow-panel {
   background: white;
   border-radius: var(--radius);
-  border: 1px solid var(--border-light);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -288,62 +293,90 @@ function exportPdf() {
 
 /* ── Flow timeline (horizontal cards) ── */
 .flow-list {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   align-items: stretch;
-  gap: 6px;
-  padding: 22px 22px 22px;
+  column-gap: 26px;
+  row-gap: 28px;
+  padding: 36px 28px 40px;
 }
 .flow-card {
-  flex: 1 1 130px;
-  min-width: 130px;
-  background: #fafbff;
+  position: relative;
+  background: linear-gradient(160deg, #ffffff 0%, #f5f8ff 100%);
   border: 1px solid var(--border-light);
-  border-radius: 10px;
-  padding: 14px 12px 14px;
+  border-radius: 14px;
+  padding: 18px 14px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  box-shadow: 0 2px 8px rgba(15, 38, 86, 0.05);
+  transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
 }
-.flow-card:hover {
-  border-color: #91caff;
-  box-shadow: 0 4px 12px rgba(22,119,255,0.1);
-  transform: translateY(-1px);
+/* Connector arrow centered in the gap to the right of each card */
+.flow-card::after {
+  content: '';
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: 9px;
+  border-top: 2px solid #4096ff;
+  border-right: 2px solid #4096ff;
+  transform: translateY(-50%) rotate(45deg);
+}
+/* No arrow after the last card in each row (6 cols) or the very last card */
+.flow-card:nth-child(6n)::after,
+.flow-card:last-child::after {
+  display: none;
+}
+@media (hover: hover) {
+  .flow-card:hover {
+    border-color: #91caff;
+    box-shadow: 0 8px 20px rgba(22,119,255,0.16);
+    transform: translateY(-3px);
+  }
+}
+/* ── Org step card: highlighted blue border + soft glow ── */
+.flow-card-org {
+  border: 1.5px solid #69b1ff;
+  box-shadow: 0 0 0 4px rgba(22,119,255,0.08), 0 6px 16px rgba(22,119,255,0.16);
 }
 .flow-num {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  height: 18px;
-  padding: 0 8px;
+  height: 20px;
+  padding: 0 10px;
   border-radius: 999px;
-  background: #e6f4ff;
-  color: var(--primary);
+  background: linear-gradient(135deg, #1677ff 0%, #4096ff 100%);
+  color: #fff;
   font-size: 10.5px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 6px rgba(22,119,255,0.3);
 }
 .flow-num::before {
   content: 'STEP';
   font-size: 9px;
-  opacity: 0.7;
+  opacity: 0.85;
 }
 .flow-icon {
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
 }
 .flow-head {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-bottom: 6px;
+  gap: 7px;
+  margin-bottom: 8px;
 }
 .flow-title {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 700;
   color: var(--text);
   line-height: 1.3;
@@ -353,19 +386,14 @@ function exportPdf() {
   color: var(--text-secondary);
   line-height: 1.5;
 }
-.flow-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  flex-shrink: 0;
-  color: var(--primary);
-  font-size: 20px;
-  font-weight: 700;
-  line-height: 1;
-}
 @media (max-width: 900px) {
-  .flow-arrow { display: none; }
+  .flow-list { grid-template-columns: repeat(3, 1fr); }
+  .flow-card:nth-child(6n)::after { display: block; }
+  .flow-card:nth-child(3n)::after { display: none; }
+}
+@media (max-width: 560px) {
+  .flow-list { grid-template-columns: repeat(2, 1fr); }
+  .flow-card::after { display: none; }
 }
 
 /* ── Footer ── */
@@ -392,5 +420,16 @@ function exportPdf() {
     print-color-adjust: exact;
   }
   .info-panel, .org-panel, .flow-panel { box-shadow: none; border: 1px solid #ddd; break-inside: avoid; }
+  /* Flow grid: 6 cols overflows portrait page — drop to 3 and drop connector arrows */
+  .flow-list {
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 12px;
+    row-gap: 14px;
+    padding: 20px 18px 24px;
+  }
+  .flow-card { break-inside: avoid; }
+  .flow-card::after { display: none !important; }
+  /* Keep enlarged org image within a single page */
+  .org-img { max-width: 100%; max-height: 360px; }
 }
 </style>

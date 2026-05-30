@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import LandingPage from './components/LandingPage.vue'
 import RegAdvisor from './components/RegAdvisor.vue'
 import FinanceSandbox from './components/FinanceSandbox.vue'
 import LegalAssistant from './components/LegalAssistant.vue'
@@ -8,17 +9,25 @@ import PolicyEngine from './components/PolicyEngine.vue'
 
 type ModuleId = 'reg' | 'finance' | 'control' | 'legal' | 'policy'
 const currentModule = ref<ModuleId>('reg')
+const showLanding = ref(true)
 const modules: { id: ModuleId; label: string; icon: string }[] = [
   { id: 'reg', label: '智能工商注册顾问', icon: '📋' },
-  // { id: 'finance', label: '财税与成本沙盘', icon: '📊' },
-  { id: 'control', label: '开业成本预估', icon: '🧪' },
+  { id: 'control', label: '开业成本预估', icon: '📊' },
   { id: 'policy', label: '扶持政策检索', icon: '🎯' },
   { id: 'legal', label: '法务合规与合同助手', icon: '⚖️' },
 ]
+
+function enterApp() {
+  currentModule.value = 'reg'
+  showLanding.value = false
+}
 </script>
 
 <template>
-  <aside class="sidebar">
+  <LandingPage v-if="showLanding" @start="enterApp" />
+
+  <template v-else>
+    <aside class="sidebar">
     <div class="logo">
       <span class="logo-icon">⚡</span>
       <span>Lucky OS</span>
@@ -49,17 +58,25 @@ const modules: { id: ModuleId; label: string; icon: string }[] = [
       <LegalAssistant v-else />
     </main>
   </div>
+  </template>
 </template>
 
 <style scoped>
 .sidebar {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  bottom: 12px;
   width: var(--sidebar-w);
   background: #ffffff;
-  border-right: 1px solid var(--border-light);
   color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  z-index: 100;
+  overflow: hidden;
 }
 .logo {
   height: 56px;
@@ -92,11 +109,18 @@ nav { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
 }
 .nav-item:hover { color: var(--text); background: var(--bg); }
 .nav-item.active { background: #e6f4ff; color: var(--primary); font-weight: 600; }
-.main-layout { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main-layout {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin-left: calc(var(--sidebar-w) + 24px);
+  padding: 12px 12px 12px 0;
+  gap: 12px;
+}
 .topbar {
   height: 56px;
   background: white;
-  border-bottom: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   padding: 0 24px;
@@ -104,6 +128,8 @@ nav { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
   font-weight: 600;
   color: var(--text);
   flex-shrink: 0;
+  border-radius: 16px;
+  box-shadow: var(--shadow);
 }
 .content-area { flex: 1; overflow-y: auto; padding: 24px; }
 </style>

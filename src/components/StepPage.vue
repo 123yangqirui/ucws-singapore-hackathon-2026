@@ -40,6 +40,9 @@ interface CompanyTypeRecommendation {
 
 const peopleCount = ref<number | null>(props.formData.people ?? null)
 const shareholderCount = ref<number | null>(props.formData.shareholder ?? null)
+
+// 公司人数为 1 人时展示 image_2，否则展示 image_1
+const orgImage = computed(() => (peopleCount.value === 1 ? '/image_2.png' : '/image_1.png'))
 const typeLoading = ref(false)
 const typeError = ref('')
 const typeRecommendation = ref<CompanyTypeRecommendation | null>(null)
@@ -282,6 +285,7 @@ const namePref = ref(props.formData.namePref || '')
 const nameIndustry = ref('')
 const nameDesc = ref('')
 const suggestedNames = ref<string[]>([])
+const recommendedBusiness = ref('')
 const namesLoading = ref(false)
 const approval = ref<{ needsApproval: boolean; type: string; details: string } | null>(null)
 const approvalLoading = ref(false)
@@ -302,9 +306,24 @@ async function generateNames() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ namePref: namePref.value, desc: nameDesc.value }),
     })
-    if (res.ok) suggestedNames.value = (await res.json()).names
+    if (res.ok) {
+      const data = await res.json()
+      suggestedNames.value = data.names
+      // AI 推荐的主营业务：匹配到行业列表后默认选中
+      const matched = matchIndustry(data.recommendedBusiness || '')
+      recommendedBusiness.value = matched
+      if (matched) nameIndustry.value = matched
+    }
   } catch { /* ignore */ }
   namesLoading.value = false
+}
+
+// 把后端返回的主营业务匹配到固定的行业大类列表（容错：精确 → 包含）
+function matchIndustry(val: string): string {
+  if (!val) return ''
+  const exact = INDUSTRIES.find(i => i === val)
+  if (exact) return exact
+  return INDUSTRIES.find(i => i.includes(val) || val.includes(i)) || ''
 }
 
 let approvalTimer: ReturnType<typeof setTimeout> | null = null
@@ -547,6 +566,10 @@ function goForward() {
               <option v-for="ind in INDUSTRIES" :key="ind" :value="ind">{{ ind }}</option>
             </select>
           </div>
+          <div v-if="recommendedBusiness" class="biz-reco">
+            <span class="biz-reco-tag">✨ AI 推荐</span>
+            <span class="biz-reco-value">{{ recommendedBusiness }}</span>
+          </div>
           <div class="field-hint">参考：经营范围、公司类型、注册资本将在后续步骤中根据此信息智能推荐</div>
         </div>
 
@@ -701,7 +724,7 @@ function goForward() {
 
       <div v-else-if="step.id === 'org'" class="org-step">
         <div class="org-image-wrap">
-          <img class="org-image" src="/c_arch.jpg" alt="组织架构设计图" />
+          <img class="org-image" :src="orgImage" alt="组织架构设计图" />
         </div>
         <div class="org-tips">
           <span class="org-tips-label">Tips: </span>
@@ -757,7 +780,7 @@ function goForward() {
       </button>
       <div class="nav-center">
         <span v-if="step.id === 'type'" class="selected-hint">{{ typeRecommendation ? `已选：${typeRecommendation.companyType}` : '请输入公司人数和股东人数' }}</span>
-        <span v-else-if="step.id === 'org'" class="selected-hint">小tips：待定</span>
+        <span v-else-if="step.id === 'org'" class="selected-hint"></span>
         <span v-else-if="step.id === 'name'">
           <span v-if="customNameActive && customNameInput.trim()" class="selected-hint">已选：{{ customNameInput.trim() }}</span>
           <span v-else-if="!customNameActive && selected" class="selected-hint">已选：{{ selected }}</span>
@@ -818,7 +841,7 @@ function goForward() {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.step-wrap { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 1080px; margin: 0 auto; }
+.step-wrap { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 1280px; margin: 0 auto; }
 
 .step-card {
   background: white;
@@ -1303,7 +1326,7 @@ function goForward() {
 .org-image {
   display: block;
   width: 100%;
-  max-height: 280px;
+  max-height: 460px;
   object-fit: contain;
   background: white;
 }
@@ -1375,6 +1398,23 @@ function goForward() {
   font-size: 13px;
 }
 .name-row, .biz-row { display: flex; gap: 8px; }
+.biz-reco {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: #f0f7ff;
+  border: 1px solid #91caff;
+  border-radius: 8px;
+}
+.biz-reco-tag {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+.biz-reco-value { font-size: 13px; font-weight: 600; color: var(--text); }
 .generate-row {
   display: flex;
   justify-content: flex-end;
@@ -1437,7 +1477,12 @@ function goForward() {
   padding-right: 32px;
 }
 .names-loading { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary); }
-.name-suggestions { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.name-suggestions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
 .name-option {
   display: flex;
   align-items: center;
@@ -1473,7 +1518,7 @@ function goForward() {
 }
 .name-option.selected .name-option-index { background: var(--primary); color: white; }
 .name-option-label { flex: 1; font-size: 15px; font-weight: 600; color: var(--text); }
-.name-option--custom { align-items: stretch; padding: 12px 16px; }
+.name-option--custom { grid-column: 1 / -1; align-items: stretch; padding: 12px 16px; }
 .name-option--custom .name-option-index { font-size: 13px; }
 .name-option-custom-body {
   flex: 1;

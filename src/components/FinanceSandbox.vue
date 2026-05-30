@@ -162,7 +162,7 @@ function fmt(n: number) { return '¥ ' + n.toLocaleString('zh-CN', { minimumFrac
 @media (min-width: 1100px) { .grid { grid-template-columns: 3fr 2fr; } }
 .left, .right { display: flex; flex-direction: column; gap: 20px; }
 
-.card { background: white; border-radius: var(--radius); border: 1px solid var(--border-light); box-shadow: var(--shadow); padding: 24px; }
+.card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 24px; }
 .card-header { font-size: 15px; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; }
 .sub { font-size: 12px; font-weight: 400; color: var(--text-secondary); }
 
